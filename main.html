@@ -259,11 +259,27 @@ function render() {
         copyBtn.className = 'copy-btn';
         copyBtn.textContent = 'Copiar';
         copyBtn.onclick = () => {
-          navigator.clipboard.writeText(c.cmd).then(() => {
+          const fallback = (text) => {
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0';
+            document.body.appendChild(ta);
+            ta.focus();
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+          };
+          const confirm = () => {
             copyBtn.textContent = 'Copiado!';
             copyBtn.classList.add('copied');
             setTimeout(() => { copyBtn.textContent = 'Copiar'; copyBtn.classList.remove('copied'); }, 1500);
-          });
+          };
+          if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(c.cmd).then(confirm).catch(() => { fallback(c.cmd); confirm(); });
+          } else {
+            fallback(c.cmd);
+            confirm();
+          }
         };
 
         row.appendChild(codeEl);
